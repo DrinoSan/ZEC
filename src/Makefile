@@ -9,10 +9,10 @@ LDIR =../lib
 
 LIBS=-lm
 
-_DEPS = chunk.h common.h memory.h debug.h value.h
+_DEPS = chunk.h common.h memory.h debug.h value.h vm.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ = main.o chunk.o memory.o  debug.o value.o
+_OBJ = main.o chunk.o memory.o  debug.o value.o vm.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 
