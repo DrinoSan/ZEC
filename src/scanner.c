@@ -20,6 +20,18 @@ void initScanner(const char *source)
     scanner.line = 1;
 }
 
+static bool isAlpha(char c)
+{
+    return (c >= 'a' && c <= 'z') ||
+           (c >= 'A' && c <= 'Z') ||
+           c == '_';
+}
+
+static bool isDigit(char c)
+{
+    return c >= '0' && c <= '9';
+}
+
 static bool isAtEnd()
 {
     return *scanner.current == '\0';
@@ -31,10 +43,24 @@ static char advance()
     return scanner.current[-1];
 }
 
-static bool match( char expected )
+static char peek()
 {
-    if( isAtEnd() ) return false;
-    if( *scanner.current != expected ) return false;
+    return *scanner.current;
+}
+
+static char peeknext()
+{
+    if (isAtEnd())
+        return '\0';
+    return scanner.current[1];
+}
+
+static bool match(char expected)
+{
+    if (isAtEnd())
+        return false;
+    if (*scanner.current != expected)
+        return false;
     scanner.current++;
     return true;
 }
@@ -59,14 +85,112 @@ static Token errorToken(const char *message)
     return token;
 }
 
+static void skipWhitespace()
+{
+    for (;;)
+    {
+        char c = peek();
+        switch (c)
+        {
+        case ' ':
+        case '\r':
+        case '\t':
+            advance();
+            break;
+        case '\n':
+            scanner.line++;
+            advance();
+            break;
+        case '/':
+            if (peekNext() == '/')
+            {
+                // A comment goes until the end of the line.
+                while (peek() != '\n' && !isAtEnd())
+                    advance();
+            }
+            else
+            {
+                return;
+            }
+        default:
+            return;
+        }
+    }
+}
+
+static TokenType identifierType()
+{
+    switch( scanner.start[0] )
+    {
+        case 'a': return checkKeyword(1, 2, "nd", TOKEN_AND);
+        case 'c': return checkKeyword(1, 2, "lass", TOKEN_CLASS);
+        case 'e': return checkKeyword(1, 2, "lse", TOKEN_ELSE);
+        case 'i': return checkKeyword(1, 2, "f", TOKEN_IF);
+        case 'n': return checkKeyword(1, 2, "il", TOKEN_NIL);
+        case 'o': return checkKeyword(1, 2, "r", TOKEN_OR);
+        case 'p': return checkKeyword(1, 2, "rint", TOKEN_PRINT);
+        case 'r': return checkKeyword(1, 2, "eturn", TOKEN_RETURN);
+        case 's': return checkKeyword(1, 2, "uper", TOKEN_SUPER);
+        case 'v': return checkKeyword(1, 2, "ar", TOKEN_VAR);
+        case 'w': return checkKeyword(1, 2, "hile", TOKEN_WHILE);
+
+    }
+    return TOKEN_IDENTIFIER;
+}
+
+static Token identifier()
+{
+    while (isAlpha(peek()) || isDigit(peek()))
+        advance();
+    return makeToken(identifierType());
+}
+
+static Token number()
+{
+    while (isDigit(peek()))
+        advance();
+
+    // Look behind the dot :D
+    if (peek() == '.' && isDigit(peekNext()))
+    {
+        // Consume that little dot aka "."
+        advance();
+
+        while (isDigit(peek()))
+            advance();
+    }
+}
+
+static Token string()
+{
+    while (peek() != '"' && isAtEnd())
+    {
+        if (peek() == '\n')
+            scanner.line++;
+        advance();
+    }
+
+    // Why dont you just close the damn string
+    if (isAtEnd())
+        return errorToken("Unterminated string.");
+
+    advance();
+    return makeToken(TOKEN_STRING);
+}
+
 Token scanToken()
 {
+    skipWhitespace();
     scanner.start = scanner.current;
 
     if (isAtEnd())
         return makeToken(TOKEN_EOF);
 
     char c = advance();
+    if (isAlpha(c))
+        return identifier();
+    if (isDigit(c))
+        return number();
 
     switch (c)
     {
@@ -104,6 +228,8 @@ Token scanToken()
     case '>':
         return makeToken(
             match('=') ? TOKEN_GREATER_EQUAL : TOKEN_GREATER);
+    case '"':
+        return string();
     }
 
     return errorToken("Unexpected character.");
