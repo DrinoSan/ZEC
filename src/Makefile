@@ -1,7 +1,7 @@
 IDIR =../include
 
 CC=gcc
-CFLAGS=-I$(IDIR)
+CFLAGS=-I$(IDIR) -std=c11
 NAME=zec
 
 ODIR=obj

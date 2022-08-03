@@ -48,7 +48,7 @@ static char peek()
     return *scanner.current;
 }
 
-static char peeknext()
+static char peekNext()
 {
     if (isAtEnd())
         return '\0';
@@ -142,7 +142,7 @@ static TokenType identifierType()
                 {
                     case 'a': return checkKeyword( 2, 3, "lse", TOKEN_FALSE );
                     case 'o': return checkKeyword( 2, 1, "r", TOKEN_FOR );
-                    case 'u': return checkKeyword( 2, 1, 'n', TOKEN_FUN );
+                    case 'u': return checkKeyword( 2, 1, "n", TOKEN_FUN );
                 }
             }
             break;
@@ -190,6 +190,7 @@ static Token number()
         while (isDigit(peek()))
             advance();
     }
+    return makeToken(TOKEN_NUMBER);
 }
 
 static Token string()
